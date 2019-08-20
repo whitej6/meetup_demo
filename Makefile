@@ -633,3 +633,10 @@ psql-container:
 
 VERSION:
 	@echo "awx: $(VERSION)"
+
+venv-deploy:
+	ansible-playbook -i installer/inventory installer/install.yml
+
+venv-destroy:
+	docker ps | grep awx | rev | cut -d ' ' -f 1 | rev | xargs docker rm -f
+	rm -rf /tmp/pgdocker/*

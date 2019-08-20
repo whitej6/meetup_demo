@@ -1,0 +1,8 @@
+{# Base libs for virtualenv #}
+{% for lib in venvs_base %}
+{{ lib }}
+{# Custom list of libs for virtualenv #}
+{% endfor %}
+{% for lib in item['libs'] %}
+{{ lib }}
+{% endfor %}

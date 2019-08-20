@@ -1,0 +1,14 @@
+FROM python:2.7
+
+### Create volumes for virtualenvs
+{% for venv in venvs %}
+VOLUME /var/lib/awx/venv/{{ venv["name"] }}
+WORKDIR /var/lib/awx/venv/{{ venv["name"] }}
+ADD requirements-{{ venv["name"] }}.txt .
+{% endfor %}
+
+### Install virtualenvs
+VOLUME /installer
+WORKDIR /installer
+ADD install.sh .
+ENTRYPOINT ./install.sh

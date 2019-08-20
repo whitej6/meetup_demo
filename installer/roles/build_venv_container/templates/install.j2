@@ -1,0 +1,10 @@
+
+### Create and install virtualenvs
+
+{% for venv in venvs %}
+cd /var/lib/awx/venv/{{ venv["name"] }}
+virtualenv /var/lib/awx/venv/{{ venv["name"] }}
+./bin/pip install -r requirements-{{ venv["name"] }}.txt
+{% endfor %}
+
+python

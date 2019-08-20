@@ -1,0 +1,175 @@
+---
+- name: "WAIT FOR SERVICES TO BOOTSTRAP"
+  uri:
+    url: "http://127.0.0.1/api/v2"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 10
+  delay: 30
+
+- name: "Wait an additional 10 seconds for safe measure"
+  pause:
+    seconds: 10
+
+- name: "POST Organizations API"
+  uri:
+    url: "http://127.0.0.1/api/v2/organizations/"
+    force_basic_auth: yes
+    body: "{{ organization_settings }}"
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Org: "{{ orgs.json.id }}"
+
+- name: "PATCH SETTINGS/AUTHENTICATION/GITHUB API"
+  uri:
+    url: "http://127.0.0.1/api/v2/settings/system/"
+    force_basic_auth: yes
+    body: "{{ system_settings }}"
+    body_format: json
+    method: PATCH
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 200
+
+- name: "PATCH SETTINGS/AUTHENTICATION/GITHUB API"
+  uri:
+    url: "http://127.0.0.1/api/v2/settings/github/"
+    force_basic_auth: yes
+    body: "{{ github_settings }}"
+    body_format: json
+    method: PATCH
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 200
+
+
+- name: "POST Inventory Scripts API"
+  uri:
+    url: "http://127.0.0.1/api/v2/inventory_scripts/"
+    force_basic_auth: yes
+    body: "{{ inventory_script }}"
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Script: "{{ orgs.json.id }}"
+
+- name: "POST Inventory  API"
+  uri:
+    url: "http://127.0.0.1/api/v2/inventories/"
+    force_basic_auth: yes
+    body: "{{ inventory }}"
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Inventory: "{{ orgs.json.id }}"
+
+- name: "POST Inventory Source API"
+  uri:
+    url: "http://127.0.0.1/api/v2/inventories/{{ Demo_Inventory }}/inventory_sources/"
+    force_basic_auth: yes
+    body: "{{ inventory_source }}"
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Source: "{{ orgs.json.id }}"
+
+- name: "POST Projects API"
+  uri:
+    url: "http://127.0.0.1/api/v2/projects/"
+    force_basic_auth: yes
+    body: "{{ project }}"
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Project: "{{ orgs.json.id }}"
+
+- name: "POST Project Update API"
+  uri:
+    url: "http://127.0.0.1/api/v2/projects/{{ Demo_Project }}/update/"
+    force_basic_auth: yes
+    body: {}
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 202
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Project_Update: "{{ orgs.json.id }}"
+
+- name: "Wait for SCM Update to complete"
+  uri:
+    url: "http://127.0.0.1/api/v2/project_updates/{{ Demo_Project_Update }}/"
+    status_code: 200
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    force_basic_auth: yes
+  register: result
+  until: result.json.get("status", "") == "successful"
+  retries: 10
+  delay: 30
+
+- name: "POST Job Template API"
+  uri:
+    url: "http://127.0.0.1/api/v2/job_templates/"
+    force_basic_auth: yes
+    body: "{{ job_template }}"
+    body_format: json
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  register: orgs
+
+- name: "Parse Vars"
+  set_fact:
+    Demo_Job: "{{ orgs.json.id }}"
+
+- name: "POST Job launch API"
+  uri:
+    url: "http://127.0.0.1/api/v2/job_templates/{{ item }}/launch/"
+    force_basic_auth: yes
+    body_format: json
+    body: {}
+    method: POST
+    user: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+    status_code: 201
+  loop:
+    - "{{ Demo_Job }}"
+    - "Demo%20Job%20Template"
+

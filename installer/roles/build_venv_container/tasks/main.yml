@@ -1,0 +1,65 @@
+---
+
+- name: Set docker build base path
+  set_fact:
+    docker_base_path: "{{ awx_local_base_config_path|default('/tmp') }}/docker-image"
+
+- name: Ensure directory exists
+  file:
+    path: "{{ docker_base_path }}"
+    state: directory
+  delegate_to: localhost
+
+- name: Template venv installer
+  template:
+    src: install.j2
+    dest: "{{ docker_base_path }}/install.sh"
+  delegate_to: localhost
+
+- name: Template venv Dockerfile
+  template:
+    src: Dockerfile.j2
+    dest: "{{ docker_base_path }}/Dockerfile"
+  delegate_to: localhost
+
+- name: Template venv requirements files
+  template:
+    src: requirements.j2
+    dest: "{{ docker_base_path }}/requirements-{{ item['name'] }}.txt"
+  with_items: "{{ venvs }}"
+  delegate_to: localhost
+
+- name: Changing perm of "{{ docker_base_path }}/install.sh", adding "+x"
+  file: 
+    dest: "{{ docker_base_path }}/install.sh"
+    mode: +x
+
+- name: Tag task and web images as latest
+  command: "docker rm -f {{ venv_image }}"
+  delegate_to: localhost
+  ignore_errors: True
+
+- name: Build base task image
+  docker_image:
+    buildargs:
+      http_proxy: "{{ http_proxy | default('') }}"
+      https_proxy: "{{ https_proxy | default('') }}"
+      no_proxy: "{{ no_proxy | default('') }}"
+    path: "{{ docker_base_path }}"
+    dockerfile: Dockerfile
+    name: "{{ venv_image }}"
+    tag: "{{ venv_version }}"
+    pull: no
+    force: yes
+  delegate_to: localhost
+
+- name: Tag task and web images as latest
+  command: "docker tag {{ venv_image }}:{{ venv_version }} {{ venv_image }}:latest"
+  delegate_to: localhost
+
+#- name: Clean docker base directory
+#  file:
+#    path: "{{ docker_base_path }}"
+#    state: absent
+#  when: cleanup_docker_base|default(True)|bool
+#  delegate_to: localhost

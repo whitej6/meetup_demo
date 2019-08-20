@@ -1,0 +1,73 @@
+---
+organization_settings:
+  name: Demo_Org
+  description: ""
+  max_hosts: 0
+  custom_virtualenv: /var/lib/awx/venv/custom/
+github_settings:
+  SOCIAL_AUTH_GITHUB_KEY: 
+  SOCIAL_AUTH_GITHUB_SECRET: 
+  SOCIAL_AUTH_GITHUB_ORGANIZATION_MAP: 
+    Demo_Org:
+      users: true
+      admins: true
+  SOCIAL_AUTH_GITHUB_TEAM_MAP:
+system_settings:
+  TOWER_URL_BASE: http://localhost
+inventory_script:
+  name: Demo_Script
+  script: |
+    #!/usr/bin/env python
+    import json
+    print(
+        json.dumps(
+            {
+                "csr": {
+                    "hosts": [
+                        "csr1",
+                        "csr2"
+                    ]
+                },
+                "_meta": {
+                    "hostvars": {
+                        "csr1": {
+                            "ansible_host": ""
+                        },
+                        "csr2": {
+                            "ansible_host": ""
+                        }
+                    }
+                }
+            }
+        )
+    )
+  organization: "{{ Demo_Org }}"
+inventory:
+  name: Demo_Inventory
+  organization: "{{ Demo_Org }}"
+inventory_source:
+  name: Demo_Source
+  source: custom
+  source_script: "{{ Demo_Script }}"
+  update_on_launch: yes
+credential:
+  name: Demo_Cred
+  organization: "{{ Demo_Org }}"
+  credential_type: 4
+  inputs:
+    username: "{{ admin_user }}"
+    password: "{{ admin_password }}"
+project:
+  name: Demo_Project
+  scm_type: git
+  scm_url: https://github.com/whitej6/Demo_Repo.git
+  custom_virtualenv: /var/lib/awx/venv/custom/
+  organization: "{{ Demo_Org }}"
+job_template:
+  name: Demo_Job
+  project: "{{ Demo_Project }}"
+  playbook: "Demo.yml"
+  custom_virtualenv: /var/lib/awx/venv/custom/
+  inventory: "{{ Demo_Inventory }}"
+  organization: "{{ Demo_Org }}"
+
